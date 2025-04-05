@@ -8,7 +8,7 @@
   <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    /* Basic reset and light mode */
+    /* Basic reset and light mode styling */
     html, body {
       margin: 0;
       padding: 0;
@@ -18,7 +18,6 @@
       color: #000;
       transition: background-color 0.3s, color 0.3s;
     }
-    /* Allow scrolling */
     body {
       overflow: auto;
     }
@@ -30,11 +29,11 @@
     .dark-mode table td {
       border-color: #444;
     }
-    /* In dark mode, force the canvas background to be black */
+    /* Dark mode: We'll update charts via JS.
+       But also set the canvas background to black in dark mode */
     .dark-mode canvas {
-      background-color: #000 !important;
+      background-color: #121212 !important;
     }
-
     /* Toggle buttons */
     #darkModeToggle, #requestCORSToggle {
       position: fixed;
@@ -57,8 +56,7 @@
     #requestCORSToggle {
       right: 200px;
     }
-
-    /* Page layout */
+    /* Layout styles */
     .main-container {
       display: flex;
       flex-direction: column;
@@ -69,8 +67,7 @@
     .bottom-section {
       margin-bottom: 20px;
     }
-
-    /* Overall (top) chart container - no fixed height */
+    /* Overall chart container (no fixed height so it resizes naturally) */
     .overall-chart-container {
       width: 100%;
       margin-bottom: 20px;
@@ -86,8 +83,7 @@
       border: 1px solid #ccc;
       padding: 4px 8px;
     }
-
-    /* Bottom section for workers */
+    /* Bottom section for worker stats */
     .bottom-section {
       display: flex;
       flex-wrap: wrap;
@@ -101,9 +97,8 @@
       display: flex;
       flex-direction: column;
     }
-    /* Let the chart area grow/shrink as needed (no forced height) */
     .worker-chart-section {
-      margin-bottom: 20px; /* add spacing so table doesn't overlap */
+      margin-bottom: 20px;
     }
     .worker-details-section {
       text-align: center;
@@ -117,22 +112,20 @@
       border: 1px solid #ccc;
       padding: 4px 8px;
     }
-
-    /* Let Chart.js handle responsive sizing; remove forced canvas size */
+    /* Let Chart.js handle responsive sizing */
     canvas {
       display: block;
       max-width: 100%;
       height: auto;
     }
-
     h1, h2, h3 {
-      margin: 5px;
       text-align: center;
+      margin: 5px;
     }
   </style>
 </head>
 <body>
-  <!-- Button to toggle dark mode -->
+  <!-- Dark mode toggle button -->
   <button id="darkModeToggle">Toggle Dark Mode</button>
   <!-- Button to request temporary CORS access -->
   <button id="requestCORSToggle" onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')">
@@ -197,10 +190,64 @@
   </div>
 
   <script>
-    // Toggle dark mode on button click
+    // Function to update chart appearance based on dark mode.
+    function updateChartAppearance() {
+      if (document.body.classList.contains('dark-mode')) {
+        // Overall chart updates for dark mode:
+        overallChart.options.scales.x.ticks.color = 'white';
+        overallChart.options.scales.y.ticks.color = 'white';
+        overallChart.options.scales.x.grid.color = 'gray';
+        overallChart.options.scales.y.grid.color = 'gray';
+        overallChart.options.plugins.legend.labels.color = 'white';
+        overallChart.data.datasets.forEach(ds => ds.borderColor = 'white');
+
+        // Worker charts updates for dark mode:
+        [workerChart1, workerChart2].forEach(chart => {
+          chart.options.scales.x.ticks.color = 'white';
+          chart.options.scales.y.ticks.color = 'white';
+          chart.options.scales.x.grid.color = 'gray';
+          chart.options.scales.y.grid.color = 'gray';
+          chart.options.plugins.legend.labels.color = 'white';
+          chart.data.datasets.forEach(ds => ds.borderColor = 'white');
+          chart.update();
+        });
+      } else {
+        // Revert overall chart to original colors:
+        overallChart.options.scales.x.ticks.color = '#666';
+        overallChart.options.scales.y.ticks.color = '#666';
+        overallChart.options.scales.x.grid.color = 'rgba(0,0,0,0.1)';
+        overallChart.options.scales.y.grid.color = 'rgba(0,0,0,0.1)';
+        overallChart.options.plugins.legend.labels.color = '#666';
+        // Original colors for overallChart datasets:
+        overallChart.data.datasets[0].borderColor = 'blue';
+        overallChart.data.datasets[1].borderColor = 'green';
+        overallChart.data.datasets[2].borderColor = 'red';
+        overallChart.data.datasets[3].borderColor = 'purple';
+        overallChart.data.datasets[4].borderColor = 'orange';
+
+        // Revert worker charts to original colors:
+        [workerChart1, workerChart2].forEach((chart) => {
+          chart.options.scales.x.ticks.color = '#666';
+          chart.options.scales.y.ticks.color = '#666';
+          chart.options.scales.x.grid.color = 'rgba(0,0,0,0.1)';
+          chart.options.scales.y.grid.color = 'rgba(0,0,0,0.1)';
+          chart.options.plugins.legend.labels.color = '#666';
+          // Original colors for worker charts datasets:
+          chart.data.datasets[0].borderColor = 'blue';
+          chart.data.datasets[1].borderColor = 'red';
+          chart.data.datasets[2].borderColor = 'green';
+          chart.data.datasets[3].borderColor = 'purple';
+          chart.update();
+        });
+      }
+      overallChart.update();
+    }
+
+    // Toggle dark mode.
     const darkModeToggle = document.getElementById("darkModeToggle");
     darkModeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
+      updateChartAppearance();
     });
 
     // CKpool endpoint (returns JSON data)
@@ -209,7 +256,7 @@
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const fetchUrl = proxyUrl + targetUrl;
 
-    // Convert a hashrate string (e.g., "2.81T") into a numeric value
+    // Helper: Convert a hashrate string like "2.81T" into a numeric value.
     function parseHashrate(str) {
       const num = parseFloat(str);
       if (str.includes('T')) return num * 1e12;
@@ -221,7 +268,7 @@
 
     let overallChart, workerChart1, workerChart2;
 
-    // Overall chart setup
+    // Set up the overall chart.
     function setupOverallChart() {
       const ctx = document.getElementById('statsChart').getContext('2d');
       overallChart = new Chart(ctx, {
@@ -243,18 +290,25 @@
             x: {
               type: 'time',
               time: { unit: 'minute' },
-              title: { display: true, text: 'Time' }
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Hashrate (numeric)' }
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             }
+          },
+          plugins: {
+            legend: { labels: { color: '#666' } }
           }
         }
       });
     }
 
-    // Worker chart setup
+    // Set up worker charts.
     function setupWorkerCharts() {
       const ctx1 = document.getElementById('workerChart1').getContext('2d');
       workerChart1 = new Chart(ctx1, {
@@ -275,12 +329,19 @@
             x: {
               type: 'time',
               time: { unit: 'minute' },
-              title: { display: true, text: 'Time' }
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Hashrate (numeric)' }
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             }
+          },
+          plugins: {
+            legend: { labels: { color: '#666' } }
           }
         }
       });
@@ -304,18 +365,25 @@
             x: {
               type: 'time',
               time: { unit: 'minute' },
-              title: { display: true, text: 'Time' }
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Hashrate (numeric)' }
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             }
+          },
+          plugins: {
+            legend: { labels: { color: '#666' } }
           }
         }
       });
     }
 
-    // Fetch stats and update charts
+    // Fetch stats and update charts and details.
     async function fetchStats() {
       try {
         const response = await fetch(fetchUrl);
@@ -324,7 +392,7 @@
         console.log(data);
         const now = new Date();
 
-        // Overall chart
+        // Overall chart update.
         const overall1m = parseHashrate(data.hashrate1m);
         const overall5m = parseHashrate(data.hashrate5m);
         const overall1hr = parseHashrate(data.hashrate1hr);
@@ -343,13 +411,13 @@
         }
         overallChart.update();
 
-        // Overall details
+        // Overall details.
         document.getElementById('overallShares').textContent = data.shares;
         document.getElementById('overallBestShare').textContent = data.bestshare;
         document.getElementById('overallBestEver').textContent = data.bestever;
         document.getElementById('overallLastShare').textContent = data.lastshare;
 
-        // Worker 1
+        // Worker 1 update.
         const worker1 = data.worker[0];
         document.getElementById('worker1Name').textContent = worker1.workername;
         const w1_5m = parseHashrate(worker1.hashrate5m);
@@ -373,7 +441,7 @@
         document.getElementById('worker1BestEver').textContent = worker1.bestever;
         document.getElementById('worker1LastShare').textContent = worker1.lastshare;
 
-        // Worker 2
+        // Worker 2 update.
         const worker2 = data.worker[1];
         document.getElementById('worker2Name').textContent = worker2.workername;
         const w2_5m = parseHashrate(worker2.hashrate5m);
@@ -402,7 +470,7 @@
       }
     }
 
-    // Initialize charts and data fetch
+    // Initialize charts and start fetching data.
     setupOverallChart();
     setupWorkerCharts();
     fetchStats();
