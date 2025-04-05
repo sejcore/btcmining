@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BTC Miner Stats Dashboard</title>
+  <title>Richard's BTC Miner Dashboard</title>
   <!-- Load Chart.js (v3.9.1) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <!-- Load date-fns adapter bundle -->
@@ -13,7 +13,7 @@
       margin: 0;
       padding: 0;
       min-height: 100%;
-      font-family: Arial, sans-serif;
+      font-family: Calibri, sans-serif;
       background-color: #fff;
       color: #000;
       transition: background-color 0.3s, color 0.3s;
@@ -123,14 +123,14 @@
   </style>
 </head>
 <body>
-  <!-- Toggle dark mode and request CORS access buttons -->
+  <!-- Toggle Dark Mode and Request CORS Access buttons -->
   <button id="darkModeToggle">Toggle Dark Mode</button>
   <button id="requestCORSToggle" onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')">
     Request Temporary CORS Access
   </button>
 
   <div class="main-container">
-    <!-- TOP SECTION: Overall stats -->
+    <!-- TOP SECTION: Overall Stats -->
     <div class="top-section">
       <h1>BTC Miner Stats Dashboard</h1>
       <div class="overall-chart-container">
@@ -147,12 +147,12 @@
       </div>
     </div>
 
-    <!-- BOTTOM SECTION: Worker stats -->
+    <!-- BOTTOM SECTION: Worker Stats -->
     <div class="bottom-section">
       <!-- Worker 1 -->
       <div class="worker-container">
         <h2>Worker 1 Stats</h2>
-        <h3 id="worker1Name">Loading...</h3>
+        <h4 id="worker1Name">Loading...</h4>
         <div class="worker-chart-section">
           <canvas id="workerChart1"></canvas>
         </div>
@@ -170,7 +170,7 @@
       <!-- Worker 2 -->
       <div class="worker-container">
         <h2>Worker 2 Stats</h2>
-        <h3 id="worker2Name">Loading...</h3>
+        <h4 id="worker2Name">Loading...</h4>
         <div class="worker-chart-section">
           <canvas id="workerChart2"></canvas>
         </div>
@@ -189,7 +189,7 @@
   </div>
 
   <script>
-    // Wrap everything in DOMContentLoaded to ensure elements exist.
+    // Wrap initialization in DOMContentLoaded to ensure elements are ready.
     document.addEventListener("DOMContentLoaded", function () {
 
       // Function to update chart appearance based on dark mode.
@@ -239,31 +239,107 @@
         return num;
       }
 
-      let overallChart, workerChart1, workerChart2;
-
-      // Y-axis tick callback to convert values to TH/s.
+      // Callback for formatting y-axis values as TH/s.
       function formatToTHs(value) {
         return (value / 1e12).toFixed(2) + " TH/s";
       }
 
-      // Set up the overall chart.
+      let overallChart, workerChart1, workerChart2;
+
+      // Set up the overall chart with gradient backgrounds and enhanced styling.
       function setupOverallChart() {
         const ctx = document.getElementById('statsChart').getContext('2d');
+
+        // Create gradients for each dataset.
+        const gradient1 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
+        gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
+
+        const gradient2 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient2.addColorStop(0, 'rgba(0, 255, 0, 0.5)');
+        gradient2.addColorStop(1, 'rgba(0, 255, 0, 0)');
+
+        const gradient3 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient3.addColorStop(0, 'rgba(255, 0, 0, 0.5)');
+        gradient3.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+        const gradient4 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient4.addColorStop(0, 'rgba(128, 0, 128, 0.5)');
+        gradient4.addColorStop(1, 'rgba(128, 0, 128, 0)');
+
+        const gradient5 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient5.addColorStop(0, 'rgba(255, 165, 0, 0.5)');
+        gradient5.addColorStop(1, 'rgba(255, 165, 0, 0)');
+
         overallChart = new Chart(ctx, {
           type: 'line',
           data: {
             labels: [],
             datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
+              { 
+                label: '1m', 
+                data: [], 
+                borderColor: 'blue', 
+                backgroundColor: gradient1,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 4, 
+                pointHoverRadius: 6,
+                tension: 0.3 
+              },
+              { 
+                label: '5m', 
+                data: [], 
+                borderColor: 'green', 
+                backgroundColor: gradient2,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 4, 
+                pointHoverRadius: 6,
+                tension: 0.3 
+              },
+              { 
+                label: '1hr', 
+                data: [], 
+                borderColor: 'red', 
+                backgroundColor: gradient3,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 4, 
+                pointHoverRadius: 6,
+                tension: 0.3 
+              },
+              { 
+                label: '1d', 
+                data: [], 
+                borderColor: 'purple', 
+                backgroundColor: gradient4,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 4, 
+                pointHoverRadius: 6,
+                tension: 0.3 
+              },
+              { 
+                label: '7d', 
+                data: [], 
+                borderColor: 'orange', 
+                backgroundColor: gradient5,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 4, 
+                pointHoverRadius: 6,
+                tension: 0.3 
+              }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: true,
+            animation: {
+              duration: 800,
+              easing: 'easeInOutQuad'
+            },
             scales: {
               x: {
                 type: 'time',
@@ -283,25 +359,101 @@
               }
             },
             plugins: {
-              legend: { labels: { color: '#666' } }
+              legend: { labels: { color: '#666', font: { size: 14 } } },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
       }
 
-      // Set up the worker charts (datasets: 1m, 5m, 1hr, 1d, 7d).
+      // Set up the worker charts with similar enhanced styling.
       function setupWorkerCharts() {
+        // Worker Chart 1
         const ctx1 = document.getElementById('workerChart1').getContext('2d');
+        // Create gradients for worker 1 using its canvas context.
+        const w1Gradient1 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
+        w1Gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
+        w1Gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
+        const w1Gradient2 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
+        w1Gradient2.addColorStop(0, 'rgba(0, 255, 0, 0.5)');
+        w1Gradient2.addColorStop(1, 'rgba(0, 255, 0, 0)');
+        const w1Gradient3 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
+        w1Gradient3.addColorStop(0, 'rgba(255, 0, 0, 0.5)');
+        w1Gradient3.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        const w1Gradient4 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
+        w1Gradient4.addColorStop(0, 'rgba(128, 0, 128, 0.5)');
+        w1Gradient4.addColorStop(1, 'rgba(128, 0, 128, 0)');
+        const w1Gradient5 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
+        w1Gradient5.addColorStop(0, 'rgba(255, 165, 0, 0.5)');
+        w1Gradient5.addColorStop(1, 'rgba(255, 165, 0, 0)');
+
         workerChart1 = new Chart(ctx1, {
           type: 'line',
           data: {
             labels: [],
             datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
+              { 
+                label: '1m', 
+                data: [], 
+                borderColor: 'blue', 
+                backgroundColor: w1Gradient1,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '5m', 
+                data: [], 
+                borderColor: 'green', 
+                backgroundColor: w1Gradient2,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '1hr', 
+                data: [], 
+                borderColor: 'red', 
+                backgroundColor: w1Gradient3,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '1d', 
+                data: [], 
+                borderColor: 'purple', 
+                backgroundColor: w1Gradient4,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '7d', 
+                data: [], 
+                borderColor: 'orange', 
+                backgroundColor: w1Gradient5,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              }
             ]
           },
           options: {
@@ -326,22 +478,98 @@
               }
             },
             plugins: {
-              legend: { labels: { color: '#666' } }
+              legend: { labels: { color: '#666', font: { size: 14 } } },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
 
+        // Worker Chart 2
         const ctx2 = document.getElementById('workerChart2').getContext('2d');
+        // Create gradients for worker 2.
+        const w2Gradient1 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
+        w2Gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
+        w2Gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
+        const w2Gradient2 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
+        w2Gradient2.addColorStop(0, 'rgba(0, 255, 0, 0.5)');
+        w2Gradient2.addColorStop(1, 'rgba(0, 255, 0, 0)');
+        const w2Gradient3 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
+        w2Gradient3.addColorStop(0, 'rgba(255, 0, 0, 0.5)');
+        w2Gradient3.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        const w2Gradient4 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
+        w2Gradient4.addColorStop(0, 'rgba(128, 0, 128, 0.5)');
+        w2Gradient4.addColorStop(1, 'rgba(128, 0, 128, 0)');
+        const w2Gradient5 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
+        w2Gradient5.addColorStop(0, 'rgba(255, 165, 0, 0.5)');
+        w2Gradient5.addColorStop(1, 'rgba(255, 165, 0, 0)');
+
         workerChart2 = new Chart(ctx2, {
           type: 'line',
           data: {
             labels: [],
             datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
+              { 
+                label: '1m', 
+                data: [], 
+                borderColor: 'blue', 
+                backgroundColor: w2Gradient1,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '5m', 
+                data: [], 
+                borderColor: 'green', 
+                backgroundColor: w2Gradient2,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '1hr', 
+                data: [], 
+                borderColor: 'red', 
+                backgroundColor: w2Gradient3,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '1d', 
+                data: [], 
+                borderColor: 'purple', 
+                backgroundColor: w2Gradient4,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              },
+              { 
+                label: '7d', 
+                data: [], 
+                borderColor: 'orange', 
+                backgroundColor: w2Gradient5,
+                fill: true, 
+                borderWidth: 3, 
+                pointRadius: 3, 
+                pointHoverRadius: 5,
+                tension: 0.3 
+              }
             ]
           },
           options: {
@@ -366,7 +594,15 @@
               }
             },
             plugins: {
-              legend: { labels: { color: '#666' } }
+              legend: { labels: { color: '#666', font: { size: 14 } } },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
@@ -431,7 +667,6 @@
           document.getElementById('worker1BestShare').textContent = worker1.bestshare;
           document.getElementById('worker1BestEver').textContent = worker1.bestever;
           document.getElementById('worker1LastShare').textContent = worker1.lastshare;
-          // Update Worker 1 1m details.
           document.getElementById('worker1_1m').textContent = worker1.hashrate1m;
 
           // Update Worker 2.
@@ -459,7 +694,6 @@
           document.getElementById('worker2BestShare').textContent = worker2.bestshare;
           document.getElementById('worker2BestEver').textContent = worker2.bestever;
           document.getElementById('worker2LastShare').textContent = worker2.lastshare;
-          // Update Worker 2 1m details.
           document.getElementById('worker2_1m').textContent = worker2.hashrate1m;
 
         } catch (error) {
