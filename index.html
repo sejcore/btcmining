@@ -23,7 +23,13 @@
     /* Overall chart container takes full width */
     #overallChartContainer {
       width: 100%;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
+    }
+    /* Overall details table */
+    #overallData {
+      width: 100%;
+      margin: 0 auto 40px;
+      text-align: center;
     }
     /* Worker charts container displays side-by-side */
     #workerChartsContainer {
@@ -62,6 +68,17 @@
   <div id="overallChartContainer">
     <canvas id="statsChart"></canvas>
   </div>
+  <!-- Overall details table -->
+  <div id="overallData">
+    <h3>Overall Details</h3>
+    <table>
+      <tr><td>Shares:</td><td id="overallShares">-</td></tr>
+      <tr><td>Best Share:</td><td id="overallBestShare">-</td></tr>
+      <tr><td>Best Ever:</td><td id="overallBestEver">-</td></tr>
+      <tr><td>Last Share:</td><td id="overallLastShare">-</td></tr>
+      <tr><td>Mining Time:</td><td id="overallMiningTime">-</td></tr>
+    </table>
+  </div>
   <!-- Worker charts container -->
   <div id="workerChartsContainer">
     <!-- Worker 1 -->
@@ -74,6 +91,8 @@
           <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
           <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
           <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
+          <tr><td>Last Share:</td><td id="worker1LastShare">-</td></tr>
+          <tr><td>Mining Time:</td><td id="worker1MiningTime">-</td></tr>
         </table>
       </div>
     </div>
@@ -87,6 +106,8 @@
           <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
           <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
           <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
+          <tr><td>Last Share:</td><td id="worker2LastShare">-</td></tr>
+          <tr><td>Mining Time:</td><td id="worker2MiningTime">-</td></tr>
         </table>
       </div>
     </div>
@@ -109,7 +130,17 @@
       return num;
     }
 
+    // Helper: Format elapsed time given startTime and current time.
+    function formatElapsedTime(startTime, currentTime) {
+      const diff = Math.floor((currentTime - startTime) / 1000); // seconds
+      const hours = Math.floor(diff / 3600);
+      const minutes = Math.floor((diff % 3600) / 60);
+      const seconds = diff % 60;
+      return hours + "h " + minutes + "m " + seconds + "s";
+    }
+
     let overallChart, workerChart1, workerChart2;
+    let overallStartTime, worker1StartTime, worker2StartTime;
 
     // Set up the overall chart with datasets for 1m, 5m, 1hr, 1d, and 7d.
     function setupOverallChart() {
@@ -188,6 +219,13 @@
         const data = await response.json();
         console.log(data);
 
+        const now = new Date();
+
+        // Set start times on first fetch.
+        if (!overallStartTime) overallStartTime = now;
+        if (!worker1StartTime) worker1StartTime = now;
+        if (!worker2StartTime) worker2StartTime = now;
+
         // Update overall stats text (using 1m as reference)
         document.getElementById('miningStat').textContent = 'Overall 1m Hashrate: ' + data.hashrate1m;
 
@@ -198,7 +236,6 @@
         const overall1d = parseHashrate(data.hashrate1d);
         const overall7d = parseHashrate(data.hashrate7d);
 
-        const now = new Date();
         overallChart.data.labels.push(now);
         overallChart.data.datasets[0].data.push(overall1m);
         overallChart.data.datasets[1].data.push(overall5m);
@@ -211,8 +248,14 @@
         }
         overallChart.update();
 
+        // Update overall details table.
+        document.getElementById('overallShares').textContent = data.shares;
+        document.getElementById('overallBestShare').textContent = data.bestshare;
+        document.getElementById('overallBestEver').textContent = data.bestever;
+        document.getElementById('overallLastShare').textContent = data.lastshare;
+        document.getElementById('overallMiningTime').textContent = formatElapsedTime(overallStartTime, now);
+
         // Update worker charts and details.
-        // Assuming data.worker is an array with two worker objects.
         const worker1 = data.worker[0];
         const worker2 = data.worker[1];
 
@@ -248,14 +291,19 @@
         }
         workerChart2.update();
 
-        // Update worker details tables.
+        // Update worker 1 details.
         document.getElementById('worker1Shares').textContent = worker1.shares;
         document.getElementById('worker1BestShare').textContent = worker1.bestshare;
         document.getElementById('worker1BestEver').textContent = worker1.bestever;
+        document.getElementById('worker1LastShare').textContent = worker1.lastshare;
+        document.getElementById('worker1MiningTime').textContent = formatElapsedTime(worker1StartTime, now);
 
+        // Update worker 2 details.
         document.getElementById('worker2Shares').textContent = worker2.shares;
         document.getElementById('worker2BestShare').textContent = worker2.bestshare;
         document.getElementById('worker2BestEver').textContent = worker2.bestever;
+        document.getElementById('worker2LastShare').textContent = worker2.lastshare;
+        document.getElementById('worker2MiningTime').textContent = formatElapsedTime(worker2StartTime, now);
 
       } catch (error) {
         console.error('Error fetching stats:', error);
