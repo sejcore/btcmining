@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>BTC Miner Stats Dashboard</title>
-  <!-- Load a specific version of Chart.js -->
+  <!-- Load Chart.js (version 3.9.1) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <!-- Load the full bundle for the date-fns adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -34,36 +34,38 @@
     <canvas id="statsChart"></canvas>
   </div>
   <script>
-    // The target URL from ckpool
+    // The target URL from CKpool (returns JSON data)
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-    // Use CORS Anywhere proxy - first request temporary access at:
-    // https://cors-anywhere.herokuapp.com/corsdemo
+    // Use CORS Anywhere proxy (you must request temporary access at: https://cors-anywhere.herokuapp.com/corsdemo)
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const fetchUrl = proxyUrl + targetUrl;
 
-    // Function to fetch and parse stats from the target page
+    // Convert a hashrate string (like "2.46T", "671G") into a number
+    function parseHashrate(str) {
+      const num = parseFloat(str);
+      if (str.includes('T')) return num * 1e12;
+      if (str.includes('G')) return num * 1e9;
+      if (str.includes('M')) return num * 1e6;
+      if (str.includes('K')) return num * 1e3;
+      return num;
+    }
+
+    // Function to fetch and process the JSON stats
     async function fetchStats() {
       try {
         const response = await fetch(fetchUrl);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const html = await response.text();
+        const data = await response.json();
+        console.log(data); // Debug: inspect the returned JSON
 
-        // Parse the returned HTML string
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        // **IMPORTANT**: Update the selector below to match the element containing your desired stat.
-        // Inspect your ckpool page to find the correct element.
-        const statElement = doc.querySelector('.stat-number'); // <-- update as needed!
-        const statText = statElement ? statElement.textContent.trim() : 'N/A';
-
-        // Update the stats display
-        document.getElementById('miningStat').textContent = 'Current Stat: ' + statText;
-
-        // Parse the stat as a number for charting
-        const statValue = parseFloat(statText.replace(/[^0-9.]/g, '')) || 0;
+        // Use the top-level "hashrate1m" value from the JSON data
+        const statText = data.hashrate1m;
+        document.getElementById('miningStat').textContent = 'Current 1m Hashrate: ' + statText;
+        
+        // Convert the hashrate string to a number for charting
+        const statValue = parseHashrate(statText);
         updateChart(statValue);
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -71,7 +73,7 @@
       }
     }
 
-    // Chart.js setup
+    // Set up the Chart.js line chart
     let chart;
     function setupChart() {
       const ctx = document.getElementById('statsChart').getContext('2d');
@@ -80,7 +82,7 @@
         data: {
           labels: [], // Timestamps
           datasets: [{
-            label: 'Mining Stat',
+            label: '1m Hashrate (numeric)',
             data: [],
             borderColor: 'blue',
             fill: false,
@@ -103,7 +105,7 @@
               beginAtZero: true,
               title: {
                 display: true,
-                text: 'Value'
+                text: 'Hashrate'
               }
             }
           }
@@ -111,12 +113,12 @@
       });
     }
 
+    // Update the chart with a new value and maintain the latest 20 data points
     function updateChart(newValue) {
       const now = new Date();
       chart.data.labels.push(now);
       chart.data.datasets[0].data.push(newValue);
       
-      // Keep only the latest 20 data points
       if (chart.data.labels.length > 20) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
@@ -124,10 +126,9 @@
       chart.update();
     }
 
-    // Initialize the chart and start fetching stats
+    // Initialize the chart and fetch stats immediately, then every 60 seconds
     setupChart();
     fetchStats();
-    // Refresh every 60 seconds
     setInterval(fetchStats, 60000);
   </script>
 </body>
