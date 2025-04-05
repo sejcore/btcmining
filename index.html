@@ -3,15 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>BTC Miner Stats Dashboard</title>
-  <!-- Load Chart.js from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Add date adapter for time scale support -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <!-- Load a specific version of Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- Load the full bundle for the date-fns adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    /* your CSS styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #statsData {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #chartContainer {
+      max-width: 800px;
+      margin: 0 auto;
+    }
   </style>
 </head>
-
 <body>
   <h1>BTC Miner Stats Dashboard</h1>
   <div id="statsData">
@@ -20,7 +33,6 @@
   <div id="chartContainer">
     <canvas id="statsChart"></canvas>
   </div>
-
   <script>
     // The target URL from ckpool
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
@@ -44,7 +56,7 @@
 
         // **IMPORTANT**: Update the selector below to match the element containing your desired stat.
         // For example, if the stat is in an element with class "stat-number", adjust accordingly.
-        const statElement = doc.querySelector('.stat-number'); // <-- change this selector!
+        const statElement = doc.querySelector('.stat-number'); // <-- change this selector as needed!
         const statText = statElement ? statElement.textContent.trim() : 'N/A';
 
         // Update the stats display
@@ -120,4 +132,3 @@
   </script>
 </body>
 </html>
-
