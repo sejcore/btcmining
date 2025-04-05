@@ -8,7 +8,7 @@
   <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    /* Basic reset and styling */
+    /* Basic reset and light mode */
     html, body {
       margin: 0;
       padding: 0;
@@ -34,6 +34,7 @@
     .dark-mode canvas {
       background-color: #000 !important;
     }
+
     /* Toggle buttons */
     #darkModeToggle, #requestCORSToggle {
       position: fixed;
@@ -56,23 +57,26 @@
     #requestCORSToggle {
       right: 200px;
     }
-    /* Layout styles */
+
+    /* Page layout */
     .main-container {
       display: flex;
       flex-direction: column;
       padding: 10px;
       box-sizing: border-box;
     }
-    .top-section, .bottom-section {
+    .top-section,
+    .bottom-section {
       margin-bottom: 20px;
     }
+
+    /* Overall (top) chart container - no fixed height */
     .overall-chart-container {
       width: 100%;
-      height: 40vh; /* Container height for overall chart */
+      margin-bottom: 20px;
     }
     .overall-details-container {
       text-align: center;
-      margin-top: 10px;
     }
     .overall-details-container table {
       margin: 0 auto;
@@ -82,6 +86,8 @@
       border: 1px solid #ccc;
       padding: 4px 8px;
     }
+
+    /* Bottom section for workers */
     .bottom-section {
       display: flex;
       flex-wrap: wrap;
@@ -95,12 +101,13 @@
       display: flex;
       flex-direction: column;
     }
+    /* Let the chart area grow/shrink as needed (no forced height) */
     .worker-chart-section {
-      height: 25vh; /* Container height for worker charts */
+      margin-bottom: 20px; /* add spacing so table doesn't overlap */
     }
     .worker-details-section {
       text-align: center;
-      margin-top: 10px;
+      margin-bottom: 20px;
     }
     .worker-details-section table {
       margin: 0 auto;
@@ -110,14 +117,17 @@
       border: 1px solid #ccc;
       padding: 4px 8px;
     }
-    /* Remove forced canvas sizing; let Chart.js handle responsiveness */
+
+    /* Let Chart.js handle responsive sizing; remove forced canvas size */
     canvas {
       display: block;
       max-width: 100%;
+      height: auto;
     }
+
     h1, h2, h3 {
-      text-align: center;
       margin: 5px;
+      text-align: center;
     }
   </style>
 </head>
@@ -187,7 +197,7 @@
   </div>
 
   <script>
-    // Toggle dark mode on click.
+    // Toggle dark mode on button click
     const darkModeToggle = document.getElementById("darkModeToggle");
     darkModeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
@@ -199,7 +209,7 @@
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const fetchUrl = proxyUrl + targetUrl;
 
-    // Helper: Convert a hashrate string like "2.81T" into a numeric value.
+    // Convert a hashrate string (e.g., "2.81T") into a numeric value
     function parseHashrate(str) {
       const num = parseFloat(str);
       if (str.includes('T')) return num * 1e12;
@@ -211,7 +221,7 @@
 
     let overallChart, workerChart1, workerChart2;
 
-    // Set up the overall chart.
+    // Overall chart setup
     function setupOverallChart() {
       const ctx = document.getElementById('statsChart').getContext('2d');
       overallChart = new Chart(ctx, {
@@ -244,7 +254,7 @@
       });
     }
 
-    // Set up the worker charts.
+    // Worker chart setup
     function setupWorkerCharts() {
       const ctx1 = document.getElementById('workerChart1').getContext('2d');
       workerChart1 = new Chart(ctx1, {
@@ -305,7 +315,7 @@
       });
     }
 
-    // Fetch stats from CKpool and update charts and details.
+    // Fetch stats and update charts
     async function fetchStats() {
       try {
         const response = await fetch(fetchUrl);
@@ -314,7 +324,7 @@
         console.log(data);
         const now = new Date();
 
-        // Update overall chart.
+        // Overall chart
         const overall1m = parseHashrate(data.hashrate1m);
         const overall5m = parseHashrate(data.hashrate5m);
         const overall1hr = parseHashrate(data.hashrate1hr);
@@ -333,13 +343,13 @@
         }
         overallChart.update();
 
-        // Update overall details.
+        // Overall details
         document.getElementById('overallShares').textContent = data.shares;
         document.getElementById('overallBestShare').textContent = data.bestshare;
         document.getElementById('overallBestEver').textContent = data.bestever;
         document.getElementById('overallLastShare').textContent = data.lastshare;
 
-        // Update Worker 1.
+        // Worker 1
         const worker1 = data.worker[0];
         document.getElementById('worker1Name').textContent = worker1.workername;
         const w1_5m = parseHashrate(worker1.hashrate5m);
@@ -363,7 +373,7 @@
         document.getElementById('worker1BestEver').textContent = worker1.bestever;
         document.getElementById('worker1LastShare').textContent = worker1.lastshare;
 
-        // Update Worker 2.
+        // Worker 2
         const worker2 = data.worker[1];
         document.getElementById('worker2Name').textContent = worker2.workername;
         const w2_5m = parseHashrate(worker2.hashrate5m);
@@ -392,7 +402,7 @@
       }
     }
 
-    // Initialize charts and start fetching data.
+    // Initialize charts and data fetch
     setupOverallChart();
     setupWorkerCharts();
     fetchStats();
