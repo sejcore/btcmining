@@ -8,163 +8,179 @@
   <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    /* Light mode styles */
-    body {
-      font-family: Arial, sans-serif;
+    html, body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
       background-color: #fff;
       color: #000;
       transition: background-color 0.3s, color 0.3s;
     }
-    h1, h2, h3 {
-      text-align: center;
-    }
-    #statsData {
-      text-align: center;
-      margin: 20px 0;
-    }
-    /* Overall chart container takes full width and limited vertical space */
-    #overallChartContainer {
-      width: 100%;
-      max-height: 50vh;
-      margin-bottom: 20px;
-    }
-    #overallChartContainer canvas {
-      width: 100%;
-      height: 40vh;
-    }
-    /* Overall details table */
-    #overallData {
-      width: 100%;
-      margin: 0 auto 40px;
-      text-align: center;
-    }
-    /* Worker charts container displays side-by-side */
-    #workerChartsContainer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-    }
-    .worker-chart {
-      flex: 1;
-      margin: 10px;
-      min-width: 300px;
-      max-width: 45%;
-    }
-    .worker-chart canvas {
-      background: #f9f9f9;
-      width: 100%;
-      height: 30vh;
-    }
-    table {
-      margin: 0 auto;
-      border-collapse: collapse;
-    }
-    td {
-      padding: 4px 10px;
-      border: 1px solid #ccc;
-    }
-    /* Dark mode styles */
     .dark-mode {
       background-color: #121212;
       color: #e0e0e0;
     }
-    .dark-mode table td {
+    /* Toggle button */
+    #darkModeToggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 16px;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1000;
+      transition: background 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: #0056b3;
+    }
+    header {
+      text-align: center;
+      padding: 5px;
+    }
+    /* Container using grid layout for overall and worker sections */
+    .container {
+      display: grid;
+      grid-template-rows: 50vh 50vh;
+      height: 100vh;
+    }
+    /* Overall section: top half */
+    .overall-section {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .overall-chart {
+      width: 100%;
+      height: 35vh;  /* Overall chart takes 35% of viewport height */
+    }
+    .overall-details {
+      height: 15vh;  /* Overall details take 15% of viewport height */
+      text-align: center;
+    }
+    .overall-details table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .overall-details td {
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+    }
+    /* Worker section: bottom half, side-by-side charts */
+    .worker-section {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 10px;
+    }
+    .worker-chart {
+      width: 45%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .worker-chart canvas {
+      width: 100%;
+      height: 25vh;  /* Each worker chart takes 25% of viewport height */
+    }
+    .worker-details {
+      height: 15vh;  /* Worker details take 15% of viewport height */
+      text-align: center;
+    }
+    .worker-details table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .worker-details td {
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+    }
+    /* Dark mode adjustments */
+    .dark-mode .overall-details td,
+    .dark-mode .worker-details td {
       border-color: #444;
     }
     .dark-mode canvas {
       background: #333 !important;
     }
-    /* Toggle button styles */
-    #darkModeToggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background: #007BFF;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.3s;
-      z-index: 1000;
-    }
-    #darkModeToggle:hover {
-      background: #0056b3;
-    }
   </style>
 </head>
 <body>
   <button id="darkModeToggle">Toggle Dark Mode</button>
-  <h1>BTC Miner Stats Dashboard</h1>
-  <div id="statsData">
-    <p id="miningStat">Loading overall stats...</p>
-  </div>
-  <!-- Overall chart container -->
-  <div id="overallChartContainer">
-    <canvas id="statsChart"></canvas>
-  </div>
-  <!-- Overall details table -->
-  <div id="overallData">
-    <h3>Overall Details</h3>
-    <table>
-      <tr><td>Shares:</td><td id="overallShares">-</td></tr>
-      <tr><td>Best Share:</td><td id="overallBestShare">-</td></tr>
-      <tr><td>Best Ever:</td><td id="overallBestEver">-</td></tr>
-      <tr><td>Last Share:</td><td id="overallLastShare">-</td></tr>
-    </table>
-  </div>
-  <!-- Worker charts container -->
-  <div id="workerChartsContainer">
-    <!-- Worker 1 -->
-    <div class="worker-chart">
-      <h2>Worker 1 Stats</h2>
-      <!-- Worker name inserted below title -->
-      <h3 id="worker1Name">Loading...</h3>
-      <canvas id="workerChart1"></canvas>
-      <div id="workerData1">
-        <h3>Worker 1 Details</h3>
+  <header>
+    <h1>BTC Miner Stats Dashboard</h1>
+  </header>
+  <div class="container">
+    <!-- Overall section (top half) -->
+    <div class="overall-section">
+      <div class="overall-chart">
+        <canvas id="statsChart"></canvas>
+      </div>
+      <div class="overall-details">
+        <h3>Overall Details</h3>
         <table>
-          <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
-          <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
-          <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
-          <tr><td>Last Share:</td><td id="worker1LastShare">-</td></tr>
+          <tr><td>Shares:</td><td id="overallShares">-</td></tr>
+          <tr><td>Best Share:</td><td id="overallBestShare">-</td></tr>
+          <tr><td>Best Ever:</td><td id="overallBestEver">-</td></tr>
+          <tr><td>Last Share:</td><td id="overallLastShare">-</td></tr>
         </table>
       </div>
     </div>
-    <!-- Worker 2 -->
-    <div class="worker-chart">
-      <h2>Worker 2 Stats</h2>
-      <!-- Worker name inserted below title -->
-      <h3 id="worker2Name">Loading...</h3>
-      <canvas id="workerChart2"></canvas>
-      <div id="workerData2">
-        <h3>Worker 2 Details</h3>
-        <table>
-          <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
-          <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
-          <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
-          <tr><td>Last Share:</td><td id="worker2LastShare">-</td></tr>
-        </table>
+    <!-- Worker section (bottom half) -->
+    <div class="worker-section">
+      <!-- Worker 1 -->
+      <div class="worker-chart">
+        <h2>Worker 1 Stats</h2>
+        <h3 id="worker1Name">Loading...</h3>
+        <canvas id="workerChart1"></canvas>
+        <div class="worker-details">
+          <h3>Worker 1 Details</h3>
+          <table>
+            <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
+            <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
+            <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
+            <tr><td>Last Share:</td><td id="worker1LastShare">-</td></tr>
+          </table>
+        </div>
+      </div>
+      <!-- Worker 2 -->
+      <div class="worker-chart">
+        <h2>Worker 2 Stats</h2>
+        <h3 id="worker2Name">Loading...</h3>
+        <canvas id="workerChart2"></canvas>
+        <div class="worker-details">
+          <h3>Worker 2 Details</h3>
+          <table>
+            <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
+            <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
+            <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
+            <tr><td>Last Share:</td><td id="worker2LastShare">-</td></tr>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Toggle dark mode when button is clicked.
+    // Toggle dark mode on click.
     const darkModeToggle = document.getElementById("darkModeToggle");
     darkModeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
     });
 
-    // The target CKpool URL (returns JSON data)
+    // CKpool endpoint (returns JSON)
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-    // Use CORS Anywhere proxy – request temporary access at: https://cors-anywhere.herokuapp.com/corsdemo
+    // Use CORS Anywhere proxy – ensure you have requested access.
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const fetchUrl = proxyUrl + targetUrl;
 
-    // Helper: Convert a hashrate string like "2.81T" into a numeric value.
+    // Helper: Convert hashrate string (e.g. "2.81T") to a numeric value.
     function parseHashrate(str) {
       const num = parseFloat(str);
       if (str.includes('T')) return num * 1e12;
@@ -176,13 +192,12 @@
 
     let overallChart, workerChart1, workerChart2;
 
-    // Set up the overall chart with datasets for 1m, 5m, 1hr, 1d, and 7d.
     function setupOverallChart() {
       const ctx = document.getElementById('statsChart').getContext('2d');
       overallChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: [], // Timestamps
+          labels: [],
           datasets: [
             { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
             { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
@@ -193,16 +208,21 @@
         },
         options: {
           scales: {
-            x: { type: 'time', time: { unit: 'minute' }, title: { display: true, text: 'Time' } },
-            y: { beginAtZero: true, title: { display: true, text: 'Hashrate (numeric)' } }
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' }
+            }
           }
         }
       });
     }
 
-    // Set up worker charts; each with datasets for 5m, 1hr, 1d, and 7d.
     function setupWorkerCharts() {
-      // Worker 1
       const ctx1 = document.getElementById('workerChart1').getContext('2d');
       workerChart1 = new Chart(ctx1, {
         type: 'line',
@@ -217,13 +237,19 @@
         },
         options: {
           scales: {
-            x: { type: 'time', time: { unit: 'minute' }, title: { display: true, text: 'Time' } },
-            y: { beginAtZero: true, title: { display: true, text: 'Hashrate (numeric)' } }
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' }
+            }
           }
         }
       });
 
-      // Worker 2
       const ctx2 = document.getElementById('workerChart2').getContext('2d');
       workerChart2 = new Chart(ctx2, {
         type: 'line',
@@ -238,14 +264,20 @@
         },
         options: {
           scales: {
-            x: { type: 'time', time: { unit: 'minute' }, title: { display: true, text: 'Time' } },
-            y: { beginAtZero: true, title: { display: true, text: 'Hashrate (numeric)' } }
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' }
+            }
           }
         }
       });
     }
 
-    // Fetch stats from CKpool and update all charts and tables.
     async function fetchStats() {
       try {
         const response = await fetch(fetchUrl);
@@ -255,10 +287,7 @@
 
         const now = new Date();
 
-        // Update overall stats text (using 1m as reference)
-        document.getElementById('miningStat').textContent = 'Overall 1m Hashrate: ' + data.hashrate1m;
-
-        // Parse overall hashrate values.
+        // Update overall chart.
         const overall1m = parseHashrate(data.hashrate1m);
         const overall5m = parseHashrate(data.hashrate5m);
         const overall1hr = parseHashrate(data.hashrate1hr);
@@ -277,7 +306,7 @@
         }
         overallChart.update();
 
-        // Update overall details table.
+        // Update overall details.
         document.getElementById('overallShares').textContent = data.shares;
         document.getElementById('overallBestShare').textContent = data.bestshare;
         document.getElementById('overallBestEver').textContent = data.bestever;
@@ -287,11 +316,9 @@
         const worker1 = data.worker[0];
         const worker2 = data.worker[1];
 
-        // Insert worker names below the titles.
         document.getElementById('worker1Name').textContent = worker1.workername;
         document.getElementById('worker2Name').textContent = worker2.workername;
 
-        // Worker 1: parse 5m, 1hr, 1d, and 7d.
         const w1_5m = parseHashrate(worker1.hashrate5m);
         const w1_1hr = parseHashrate(worker1.hashrate1hr);
         const w1_1d = parseHashrate(worker1.hashrate1d);
@@ -307,7 +334,6 @@
         }
         workerChart1.update();
 
-        // Worker 2: parse 5m, 1hr, 1d, and 7d.
         const w2_5m = parseHashrate(worker2.hashrate5m);
         const w2_1hr = parseHashrate(worker2.hashrate1hr);
         const w2_1d = parseHashrate(worker2.hashrate1d);
@@ -323,13 +349,11 @@
         }
         workerChart2.update();
 
-        // Update worker 1 details.
         document.getElementById('worker1Shares').textContent = worker1.shares;
         document.getElementById('worker1BestShare').textContent = worker1.bestshare;
         document.getElementById('worker1BestEver').textContent = worker1.bestever;
         document.getElementById('worker1LastShare').textContent = worker1.lastshare;
 
-        // Update worker 2 details.
         document.getElementById('worker2Shares').textContent = worker2.shares;
         document.getElementById('worker2BestShare').textContent = worker2.bestshare;
         document.getElementById('worker2BestEver').textContent = worker2.bestever;
@@ -341,11 +365,9 @@
       }
     }
 
-    // Initialize charts and start fetching data.
     setupOverallChart();
     setupWorkerCharts();
     fetchStats();
-    // Refresh stats every 60 seconds.
     setInterval(fetchStats, 60000);
   </script>
 </body>
