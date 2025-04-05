@@ -8,10 +8,14 @@
   <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
+    /* Light mode styles */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
+      background-color: #fff;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
     }
     h1, h2, h3 {
       text-align: center;
@@ -61,9 +65,38 @@
       padding: 4px 10px;
       border: 1px solid #ccc;
     }
+    /* Dark mode styles */
+    .dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    .dark-mode table td {
+      border-color: #444;
+    }
+    .dark-mode canvas {
+      background: #333 !important;
+    }
+    /* Toggle button styles */
+    #darkModeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s;
+      z-index: 1000;
+    }
+    #darkModeToggle:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
+  <button id="darkModeToggle">Toggle Dark Mode</button>
   <h1>BTC Miner Stats Dashboard</h1>
   <div id="statsData">
     <p id="miningStat">Loading overall stats...</p>
@@ -119,6 +152,12 @@
   </div>
 
   <script>
+    // Toggle dark mode when button is clicked.
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    darkModeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+
     // The target CKpool URL (returns JSON data)
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
     // Use CORS Anywhere proxy – request temporary access at: https://cors-anywhere.herokuapp.com/corsdemo
