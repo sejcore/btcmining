@@ -8,12 +8,11 @@
   <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    /* Reset body and html to fill the entire viewport */
+    /* Reset html and body with full height, but allow scrolling */
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      overflow: hidden; /* Hide any overflow to prevent scrolling */
+      min-height: 100%;
       font-family: Arial, sans-serif;
       background-color: #fff;
       color: #000;
@@ -50,87 +49,74 @@
       background: #0056b3;
     }
 
-    /* Overall container: vertical flex */
+    /* Use a flex container to structure the page.
+       This layout might extend vertically; scroll if needed. */
     .main-container {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      min-height: 100vh;
     }
 
-    /* Top section (40% of viewport) */
+    /* Top section: Overall stats */
     .top-section {
-      flex: 0 0 40%;
-      display: flex;
-      flex-direction: column;
+      flex: 0 0 auto;
       padding: 5px;
       box-sizing: border-box;
     }
-
-    /* Bottom section (60% of viewport) */
-    .bottom-section {
-      flex: 1; /* 60% */
-      display: flex;
-      flex-direction: row;
-      padding: 5px;
-      box-sizing: border-box;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    /* In the top section, we split space between chart (70%) and details (30%) */
     .overall-chart-container {
-      flex: 0 0 70%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      height: 40vh; /* Overall chart takes 40% of viewport height */
     }
     .overall-details-container {
-      flex: 1; /* 30% of the top section’s height */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      padding: 10px;
+      text-align: center;
+    }
+    .overall-details-container table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .overall-details-container td {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
     }
 
-    /* Worker sections side-by-side in the bottom section */
-    .worker-container {
-      width: 49%; /* roughly half the bottom section width */
+    /* Bottom section: Worker stats */
+    .bottom-section {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      padding: 5px;
       box-sizing: border-box;
     }
-
-    /* Worker chart is 70% of the worker container height */
-    .worker-chart-section {
-      flex: 0 0 70%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    /* Worker details is 30% of the worker container height */
-    .worker-details-section {
+    .worker-container {
       flex: 1;
+      margin: 10px;
+      min-width: 300px;
+      max-width: 45%;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
     }
-
-    /* Canvas must fill its container */
+    .worker-chart-section {
+      height: 25vh;
+    }
+    .worker-details-section {
+      padding: 5px;
+      text-align: center;
+    }
+    .worker-details-section table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .worker-details-section td {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+    }
+    /* Ensure canvas fills its container */
     canvas {
       width: 100% !important;
       height: 100% !important;
       background: #f9f9f9;
     }
-
-    table {
-      border-collapse: collapse;
-    }
-    td {
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-    }
-
     h1, h2, h3 {
       margin: 5px;
       text-align: center;
@@ -141,7 +127,7 @@
   <button id="darkModeToggle">Toggle Dark Mode</button>
 
   <div class="main-container">
-    <!-- TOP SECTION (40% of viewport) -->
+    <!-- TOP SECTION: Overall stats -->
     <div class="top-section">
       <h1>BTC Miner Stats Dashboard</h1>
       <div class="overall-chart-container">
@@ -158,7 +144,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM SECTION (60% of viewport) -->
+    <!-- BOTTOM SECTION: Worker stats -->
     <div class="bottom-section">
       <!-- Worker 1 -->
       <div class="worker-container">
@@ -177,7 +163,6 @@
           </table>
         </div>
       </div>
-
       <!-- Worker 2 -->
       <div class="worker-container">
         <h2>Worker 2 Stats</h2>
@@ -198,9 +183,8 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script>
-    // Dark mode toggle
+    // Toggle dark mode
     const darkModeToggle = document.getElementById("darkModeToggle");
     darkModeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
@@ -208,12 +192,11 @@
 
     // CKpool endpoint (returns JSON)
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-    // Use CORS Anywhere proxy – ensure you have requested access:
-    // https://cors-anywhere.herokuapp.com/corsdemo
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const fetchUrl = proxyUrl + targetUrl;
+    // Use AllOrigins proxy (does not require temporary access)
+    const proxyUrl = 'https://api.allorigins.hexocode.repl.co/get?disableCache=true&url=';
+    const fetchUrl = proxyUrl + encodeURIComponent(targetUrl);
 
-    // Helper to parse hashrate strings (e.g., "2.81T") into numeric values
+    // Helper: Convert a hashrate string like "2.81T" into a numeric value.
     function parseHashrate(str) {
       const num = parseFloat(str);
       if (str.includes('T')) return num * 1e12;
@@ -225,7 +208,7 @@
 
     let overallChart, workerChart1, workerChart2;
 
-    // Overall chart setup
+    // Set up the overall chart
     function setupOverallChart() {
       const ctx = document.getElementById('statsChart').getContext('2d');
       overallChart = new Chart(ctx, {
@@ -256,7 +239,7 @@
       });
     }
 
-    // Worker charts setup
+    // Set up worker charts
     function setupWorkerCharts() {
       const ctx1 = document.getElementById('workerChart1').getContext('2d');
       workerChart1 = new Chart(ctx1, {
@@ -313,12 +296,14 @@
       });
     }
 
-    // Fetch stats and update charts/tables
+    // Fetch and update stats
     async function fetchStats() {
       try {
         const response = await fetch(fetchUrl);
         if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        // AllOrigins returns JSON with a "contents" property containing the fetched text.
+        const wrapper = await response.json();
+        const data = JSON.parse(wrapper.contents);
         console.log(data);
 
         const now = new Date();
@@ -398,18 +383,13 @@
 
       } catch (error) {
         console.error('Error fetching stats:', error);
-        // Display an error message
-        const miningStatElem = document.getElementById('overallShares');
-        if (miningStatElem) {
-          miningStatElem.textContent = 'Error loading stats.';
-        }
+        // Optionally update an error message here.
       }
     }
 
-    // Initialize charts
+    // Initialize charts and fetch data
     setupOverallChart();
     setupWorkerCharts();
-    // Fetch data once, then every 60 seconds
     fetchStats();
     setInterval(fetchStats, 60000);
   </script>
