@@ -5,7 +5,7 @@
   <title>BTC Miner Stats Dashboard</title>
   <!-- Load Chart.js (v3.9.1) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <!-- Load date-fns adapter bundle -->
+  <!-- Load the date-fns adapter bundle -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     /* Basic reset and light mode styling */
@@ -29,7 +29,8 @@
     .dark-mode table td {
       border-color: #444;
     }
-    /* In dark mode, set canvas background to match page */
+    /* Dark mode: We'll update charts via JS.
+       But also set the canvas background to black in dark mode */
     .dark-mode canvas {
       background-color: #121212 !important;
     }
@@ -62,10 +63,11 @@
       padding: 10px;
       box-sizing: border-box;
     }
-    .top-section, .bottom-section {
+    .top-section,
+    .bottom-section {
       margin-bottom: 20px;
     }
-    /* Overall chart container */
+    /* Overall chart container (no fixed height so it resizes naturally) */
     .overall-chart-container {
       width: 100%;
       margin-bottom: 20px;
@@ -123,8 +125,9 @@
   </style>
 </head>
 <body>
-  <!-- Dark mode and CORS request buttons -->
+  <!-- Dark mode toggle button -->
   <button id="darkModeToggle">Toggle Dark Mode</button>
+  <!-- Button to request temporary CORS access -->
   <button id="requestCORSToggle" onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')">
     Request Temporary CORS Access
   </button>
@@ -146,6 +149,7 @@
         </table>
       </div>
     </div>
+
     <!-- BOTTOM SECTION: Worker stats -->
     <div class="bottom-section">
       <!-- Worker 1 -->
@@ -158,7 +162,6 @@
         <div class="worker-details-section">
           <h3>Worker 1 Details</h3>
           <table>
-            <tr><td>1m:</td><td id="worker1_1m">-</td></tr>
             <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
             <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
             <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
@@ -176,7 +179,6 @@
         <div class="worker-details-section">
           <h3>Worker 2 Details</h3>
           <table>
-            <tr><td>1m:</td><td id="worker2_1m">-</td></tr>
             <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
             <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
             <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
@@ -188,278 +190,291 @@
   </div>
 
   <script>
-    // Wrap all initialization in DOMContentLoaded to ensure elements exist.
-    document.addEventListener("DOMContentLoaded", function () {
+    // Function to update chart appearance based on dark mode.
+    function updateChartAppearance() {
+      if (document.body.classList.contains('dark-mode')) {
+        // Overall chart updates for dark mode:
+        overallChart.options.scales.x.ticks.color = 'white';
+        overallChart.options.scales.y.ticks.color = 'white';
+        overallChart.options.scales.x.grid.color = 'gray';
+        overallChart.options.scales.y.grid.color = 'gray';
+        overallChart.options.plugins.legend.labels.color = 'white';
+        overallChart.data.datasets.forEach(ds => ds.borderColor = 'white');
 
-      // Function to update chart appearance based on dark mode.
-      function updateChartAppearance() {
-        const isDark = document.body.classList.contains('dark-mode');
-        const tickColor = isDark ? 'white' : '#666';
-        const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-        const legendColor = isDark ? 'white' : '#666';
-        
-        // Overall chart updates:
-        overallChart.options.scales.x.ticks.color = tickColor;
-        overallChart.options.scales.y.ticks.color = tickColor;
-        overallChart.options.scales.x.grid.color = gridColor;
-        overallChart.options.scales.y.grid.color = gridColor;
-        overallChart.options.plugins.legend.labels.color = legendColor;
-        overallChart.update();
-
-        // Worker charts updates:
+        // Worker charts updates for dark mode:
         [workerChart1, workerChart2].forEach(chart => {
-          chart.options.scales.x.ticks.color = tickColor;
-          chart.options.scales.y.ticks.color = tickColor;
-          chart.options.scales.x.grid.color = gridColor;
-          chart.options.scales.y.grid.color = gridColor;
-          chart.options.plugins.legend.labels.color = legendColor;
+          chart.options.scales.x.ticks.color = 'white';
+          chart.options.scales.y.ticks.color = 'white';
+          chart.options.scales.x.grid.color = 'gray';
+          chart.options.scales.y.grid.color = 'gray';
+          chart.options.plugins.legend.labels.color = 'white';
+          chart.data.datasets.forEach(ds => ds.borderColor = 'white');
+          chart.update();
+        });
+      } else {
+        // Revert overall chart to original colors:
+        overallChart.options.scales.x.ticks.color = '#666';
+        overallChart.options.scales.y.ticks.color = '#666';
+        overallChart.options.scales.x.grid.color = 'rgba(0,0,0,0.1)';
+        overallChart.options.scales.y.grid.color = 'rgba(0,0,0,0.1)';
+        overallChart.options.plugins.legend.labels.color = '#666';
+        // Original colors for overallChart datasets:
+        overallChart.data.datasets[0].borderColor = 'blue';
+        overallChart.data.datasets[1].borderColor = 'green';
+        overallChart.data.datasets[2].borderColor = 'red';
+        overallChart.data.datasets[3].borderColor = 'purple';
+        overallChart.data.datasets[4].borderColor = 'orange';
+
+        // Revert worker charts to original colors:
+        [workerChart1, workerChart2].forEach((chart) => {
+          chart.options.scales.x.ticks.color = '#666';
+          chart.options.scales.y.ticks.color = '#666';
+          chart.options.scales.x.grid.color = 'rgba(0,0,0,0.1)';
+          chart.options.scales.y.grid.color = 'rgba(0,0,0,0.1)';
+          chart.options.plugins.legend.labels.color = '#666';
+          // Original colors for worker charts datasets:
+          chart.data.datasets[0].borderColor = 'blue';
+          chart.data.datasets[1].borderColor = 'red';
+          chart.data.datasets[2].borderColor = 'green';
+          chart.data.datasets[3].borderColor = 'purple';
           chart.update();
         });
       }
+      overallChart.update();
+    }
 
-      // Toggle dark mode.
-      const darkModeToggle = document.getElementById("darkModeToggle");
-      darkModeToggle.addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
-        updateChartAppearance();
+    // Toggle dark mode.
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    darkModeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      updateChartAppearance();
+    });
+
+    // CKpool endpoint (returns JSON data)
+    const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
+    // Use CORS Anywhere proxy (requires temporary access)
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const fetchUrl = proxyUrl + targetUrl;
+
+    // Helper: Convert a hashrate string like "2.81T" into a numeric value.
+    function parseHashrate(str) {
+      const num = parseFloat(str);
+      if (str.includes('T')) return num * 1e12;
+      if (str.includes('G')) return num * 1e9;
+      if (str.includes('M')) return num * 1e6;
+      if (str.includes('K')) return num * 1e3;
+      return num;
+    }
+
+    let overallChart, workerChart1, workerChart2;
+
+    // Set up the overall chart.
+    function setupOverallChart() {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      overallChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
+            { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
+            { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
+            { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
+            { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#666' } }
+          }
+        }
+      });
+    }
+
+    // Set up worker charts.
+    function setupWorkerCharts() {
+      const ctx1 = document.getElementById('workerChart1').getContext('2d');
+      workerChart1 = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label: '5m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
+            { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
+            { label: '1d', data: [], borderColor: 'green', fill: false, tension: 0.1 },
+            { label: '7d', data: [], borderColor: 'purple', fill: false, tension: 0.1 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#666' } }
+          }
+        }
       });
 
-      // CKpool endpoint (returns JSON)
-      const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-      // Use CORS Anywhere proxy (requires temporary access)
-      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-      const fetchUrl = proxyUrl + targetUrl;
-
-      // Helper: Convert a hashrate string (e.g., "2.81T") into a numeric value.
-      function parseHashrate(str) {
-        const num = parseFloat(str);
-        if (str.includes('T')) return num * 1e12;
-        if (str.includes('G')) return num * 1e9;
-        if (str.includes('M')) return num * 1e6;
-        if (str.includes('K')) return num * 1e3;
-        return num;
-      }
-
-      let overallChart, workerChart1, workerChart2;
-
-      // Set up the overall chart.
-      function setupOverallChart() {
-        const ctx = document.getElementById('statsChart').getContext('2d');
-        overallChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              x: {
-                type: 'time',
-                time: { unit: 'minute' },
-                title: { display: true, text: 'Time' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              },
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Hashrate (numeric)' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              }
+      const ctx2 = document.getElementById('workerChart2').getContext('2d');
+      workerChart2 = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label: '5m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
+            { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
+            { label: '1d', data: [], borderColor: 'green', fill: false, tension: 0.1 },
+            { label: '7d', data: [], borderColor: 'purple', fill: false, tension: 0.1 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'minute' },
+              title: { display: true, text: 'Time' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             },
-            plugins: {
-              legend: { labels: { color: '#666' } }
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Hashrate (numeric)' },
+              ticks: { color: '#666' },
+              grid: { color: 'rgba(0,0,0,0.1)' }
             }
-          }
-        });
-      }
-
-      // Set up the worker charts (each with datasets: 1m, 5m, 1hr, 1d, 7d).
-      function setupWorkerCharts() {
-        const ctx1 = document.getElementById('workerChart1').getContext('2d');
-        workerChart1 = new Chart(ctx1, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
-            ]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              x: {
-                type: 'time',
-                time: { unit: 'minute' },
-                title: { display: true, text: 'Time' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              },
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Hashrate (numeric)' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              }
-            },
-            plugins: {
-              legend: { labels: { color: '#666' } }
-            }
+          plugins: {
+            legend: { labels: { color: '#666' } }
           }
-        });
-
-        const ctx2 = document.getElementById('workerChart2').getContext('2d');
-        workerChart2 = new Chart(ctx2, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [
-              { label: '1m', data: [], borderColor: 'blue', fill: false, tension: 0.1 },
-              { label: '5m', data: [], borderColor: 'green', fill: false, tension: 0.1 },
-              { label: '1hr', data: [], borderColor: 'red', fill: false, tension: 0.1 },
-              { label: '1d', data: [], borderColor: 'purple', fill: false, tension: 0.1 },
-              { label: '7d', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              x: {
-                type: 'time',
-                time: { unit: 'minute' },
-                title: { display: true, text: 'Time' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              },
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Hashrate (numeric)' },
-                ticks: { color: '#666' },
-                grid: { color: 'rgba(0,0,0,0.1)' }
-              }
-            },
-            plugins: {
-              legend: { labels: { color: '#666' } }
-            }
-          }
-        });
-      }
-
-      // Fetch stats from CKpool and update charts and details.
-      async function fetchStats() {
-        try {
-          const response = await fetch(fetchUrl);
-          if (!response.ok) throw new Error('Network response was not ok');
-          const data = await response.json();
-          console.log(data);
-          const now = new Date();
-
-          // Update overall chart.
-          const overall1m = parseHashrate(data.hashrate1m);
-          const overall5m = parseHashrate(data.hashrate5m);
-          const overall1hr = parseHashrate(data.hashrate1hr);
-          const overall1d = parseHashrate(data.hashrate1d);
-          const overall7d = parseHashrate(data.hashrate7d);
-
-          overallChart.data.labels.push(now);
-          overallChart.data.datasets[0].data.push(overall1m);
-          overallChart.data.datasets[1].data.push(overall5m);
-          overallChart.data.datasets[2].data.push(overall1hr);
-          overallChart.data.datasets[3].data.push(overall1d);
-          overallChart.data.datasets[4].data.push(overall7d);
-          if (overallChart.data.labels.length > 20) {
-            overallChart.data.labels.shift();
-            overallChart.data.datasets.forEach(ds => ds.data.shift());
-          }
-          overallChart.update();
-
-          // Update overall details.
-          document.getElementById('overallShares').textContent = data.shares;
-          document.getElementById('overallBestShare').textContent = data.bestshare;
-          document.getElementById('overallBestEver').textContent = data.bestever;
-          document.getElementById('overallLastShare').textContent = data.lastshare;
-
-          // Update Worker 1.
-          const worker1 = data.worker[0];
-          document.getElementById('worker1Name').textContent = worker1.workername;
-          const w1_1m = parseHashrate(worker1.hashrate1m);
-          const w1_5m = parseHashrate(worker1.hashrate5m);
-          const w1_1hr = parseHashrate(worker1.hashrate1hr);
-          const w1_1d = parseHashrate(worker1.hashrate1d);
-          const w1_7d = parseHashrate(worker1.hashrate7d);
-
-          workerChart1.data.labels.push(now);
-          workerChart1.data.datasets[0].data.push(w1_1m);
-          workerChart1.data.datasets[1].data.push(w1_5m);
-          workerChart1.data.datasets[2].data.push(w1_1hr);
-          workerChart1.data.datasets[3].data.push(w1_1d);
-          workerChart1.data.datasets[4].data.push(w1_7d);
-          if (workerChart1.data.labels.length > 20) {
-            workerChart1.data.labels.shift();
-            workerChart1.data.datasets.forEach(ds => ds.data.shift());
-          }
-          workerChart1.update();
-
-          document.getElementById('worker1Shares').textContent = worker1.shares;
-          document.getElementById('worker1BestShare').textContent = worker1.bestshare;
-          document.getElementById('worker1BestEver').textContent = worker1.bestever;
-          document.getElementById('worker1LastShare').textContent = worker1.lastshare;
-          // Update worker 1 1m details.
-          document.getElementById('worker1_1m').textContent = worker1.hashrate1m;
-
-          // Update Worker 2.
-          const worker2 = data.worker[1];
-          document.getElementById('worker2Name').textContent = worker2.workername;
-          const w2_1m = parseHashrate(worker2.hashrate1m);
-          const w2_5m = parseHashrate(worker2.hashrate5m);
-          const w2_1hr = parseHashrate(worker2.hashrate1hr);
-          const w2_1d = parseHashrate(worker2.hashrate1d);
-          const w2_7d = parseHashrate(worker2.hashrate7d);
-
-          workerChart2.data.labels.push(now);
-          workerChart2.data.datasets[0].data.push(w2_1m);
-          workerChart2.data.datasets[1].data.push(w2_5m);
-          workerChart2.data.datasets[2].data.push(w2_1hr);
-          workerChart2.data.datasets[3].data.push(w2_1d);
-          workerChart2.data.datasets[4].data.push(w2_7d);
-          if (workerChart2.data.labels.length > 20) {
-            workerChart2.data.labels.shift();
-            workerChart2.data.datasets.forEach(ds => ds.data.shift());
-          }
-          workerChart2.update();
-
-          document.getElementById('worker2Shares').textContent = worker2.shares;
-          document.getElementById('worker2BestShare').textContent = worker2.bestshare;
-          document.getElementById('worker2BestEver').textContent = worker2.bestever;
-          document.getElementById('worker2LastShare').textContent = worker2.lastshare;
-          // Update worker 2 1m details.
-          document.getElementById('worker2_1m').textContent = worker2.hashrate1m;
-
-        } catch (error) {
-          console.error('Error fetching stats:', error);
         }
-      }
+      });
+    }
 
-      // Initialize charts and fetch data.
-      setupOverallChart();
-      setupWorkerCharts();
-      fetchStats();
-      setInterval(fetchStats, 60000);
-    });
+    // Fetch stats and update charts and details.
+    async function fetchStats() {
+      try {
+        const response = await fetch(fetchUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        console.log(data);
+        const now = new Date();
+
+        // Overall chart update.
+        const overall1m = parseHashrate(data.hashrate1m);
+        const overall5m = parseHashrate(data.hashrate5m);
+        const overall1hr = parseHashrate(data.hashrate1hr);
+        const overall1d = parseHashrate(data.hashrate1d);
+        const overall7d = parseHashrate(data.hashrate7d);
+
+        overallChart.data.labels.push(now);
+        overallChart.data.datasets[0].data.push(overall1m);
+        overallChart.data.datasets[1].data.push(overall5m);
+        overallChart.data.datasets[2].data.push(overall1hr);
+        overallChart.data.datasets[3].data.push(overall1d);
+        overallChart.data.datasets[4].data.push(overall7d);
+        if (overallChart.data.labels.length > 20) {
+          overallChart.data.labels.shift();
+          overallChart.data.datasets.forEach(ds => ds.data.shift());
+        }
+        overallChart.update();
+
+        // Overall details.
+        document.getElementById('overallShares').textContent = data.shares;
+        document.getElementById('overallBestShare').textContent = data.bestshare;
+        document.getElementById('overallBestEver').textContent = data.bestever;
+        document.getElementById('overallLastShare').textContent = data.lastshare;
+
+        // Worker 1 update.
+        const worker1 = data.worker[0];
+        document.getElementById('worker1Name').textContent = worker1.workername;
+        const w1_5m = parseHashrate(worker1.hashrate5m);
+        const w1_1hr = parseHashrate(worker1.hashrate1hr);
+        const w1_1d = parseHashrate(worker1.hashrate1d);
+        const w1_7d = parseHashrate(worker1.hashrate7d);
+
+        workerChart1.data.labels.push(now);
+        workerChart1.data.datasets[0].data.push(w1_5m);
+        workerChart1.data.datasets[1].data.push(w1_1hr);
+        workerChart1.data.datasets[2].data.push(w1_1d);
+        workerChart1.data.datasets[3].data.push(w1_7d);
+        if (workerChart1.data.labels.length > 20) {
+          workerChart1.data.labels.shift();
+          workerChart1.data.datasets.forEach(ds => ds.data.shift());
+        }
+        workerChart1.update();
+
+        document.getElementById('worker1Shares').textContent = worker1.shares;
+        document.getElementById('worker1BestShare').textContent = worker1.bestshare;
+        document.getElementById('worker1BestEver').textContent = worker1.bestever;
+        document.getElementById('worker1LastShare').textContent = worker1.lastshare;
+
+        // Worker 2 update.
+        const worker2 = data.worker[1];
+        document.getElementById('worker2Name').textContent = worker2.workername;
+        const w2_5m = parseHashrate(worker2.hashrate5m);
+        const w2_1hr = parseHashrate(worker2.hashrate1hr);
+        const w2_1d = parseHashrate(worker2.hashrate1d);
+        const w2_7d = parseHashrate(worker2.hashrate7d);
+
+        workerChart2.data.labels.push(now);
+        workerChart2.data.datasets[0].data.push(w2_5m);
+        workerChart2.data.datasets[1].data.push(w2_1hr);
+        workerChart2.data.datasets[2].data.push(w2_1d);
+        workerChart2.data.datasets[3].data.push(w2_7d);
+        if (workerChart2.data.labels.length > 20) {
+          workerChart2.data.labels.shift();
+          workerChart2.data.datasets.forEach(ds => ds.data.shift());
+        }
+        workerChart2.update();
+
+        document.getElementById('worker2Shares').textContent = worker2.shares;
+        document.getElementById('worker2BestShare').textContent = worker2.bestshare;
+        document.getElementById('worker2BestEver').textContent = worker2.bestever;
+        document.getElementById('worker2LastShare').textContent = worker2.lastshare;
+
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    }
+
+    // Initialize charts and start fetching data.
+    setupOverallChart();
+    setupWorkerCharts();
+    fetchStats();
+    setInterval(fetchStats, 60000);
   </script>
 </body>
 </html>
