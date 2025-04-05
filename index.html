@@ -10,7 +10,8 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      padding: 20px;
     }
     h1, h2, h3 {
       text-align: center;
@@ -19,13 +20,28 @@
       text-align: center;
       margin: 20px 0;
     }
-    #chartContainer, #workerChartsContainer {
-      max-width: 800px;
-      margin: 0 auto 40px;
+    /* Overall chart container takes full width */
+    #overallChartContainer {
+      width: 100%;
+      margin-bottom: 40px;
+    }
+    /* Worker charts container displays side-by-side */
+    #workerChartsContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+    .worker-chart {
+      flex: 1;
+      margin: 10px;
+      min-width: 300px;
+      max-width: 45%;
     }
     canvas {
       background: #f9f9f9;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      width: 100%;
+      height: auto;
     }
     table {
       margin: 0 auto;
@@ -42,31 +58,37 @@
   <div id="statsData">
     <p id="miningStat">Loading overall stats...</p>
   </div>
-  <!-- Overall hashrate chart -->
-  <div id="chartContainer">
+  <!-- Overall chart container -->
+  <div id="overallChartContainer">
     <canvas id="statsChart"></canvas>
   </div>
-  <!-- Worker charts and details -->
+  <!-- Worker charts container -->
   <div id="workerChartsContainer">
-    <h2>Worker 1 Stats</h2>
-    <canvas id="workerChart1"></canvas>
-    <div id="workerData1">
-      <h3>Worker 1 Details</h3>
-      <table>
-        <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
-        <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
-        <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
-      </table>
+    <!-- Worker 1 -->
+    <div class="worker-chart">
+      <h2>Worker 1 Stats</h2>
+      <canvas id="workerChart1"></canvas>
+      <div id="workerData1">
+        <h3>Worker 1 Details</h3>
+        <table>
+          <tr><td>Shares:</td><td id="worker1Shares">-</td></tr>
+          <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
+          <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
+        </table>
+      </div>
     </div>
-    <h2>Worker 2 Stats</h2>
-    <canvas id="workerChart2"></canvas>
-    <div id="workerData2">
-      <h3>Worker 2 Details</h3>
-      <table>
-        <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
-        <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
-        <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
-      </table>
+    <!-- Worker 2 -->
+    <div class="worker-chart">
+      <h2>Worker 2 Stats</h2>
+      <canvas id="workerChart2"></canvas>
+      <div id="workerData2">
+        <h3>Worker 2 Details</h3>
+        <table>
+          <tr><td>Shares:</td><td id="worker2Shares">-</td></tr>
+          <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
+          <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -194,7 +216,7 @@
         const worker1 = data.worker[0];
         const worker2 = data.worker[1];
 
-        // For Worker 1, parse 5m, 1hr, 1d, and 7d.
+        // Worker 1: parse 5m, 1hr, 1d, and 7d.
         const w1_5m = parseHashrate(worker1.hashrate5m);
         const w1_1hr = parseHashrate(worker1.hashrate1hr);
         const w1_1d = parseHashrate(worker1.hashrate1d);
@@ -210,7 +232,7 @@
         }
         workerChart1.update();
 
-        // For Worker 2, parse 5m, 1hr, 1d, and 7d.
+        // Worker 2: parse 5m, 1hr, 1d, and 7d.
         const w2_5m = parseHashrate(worker2.hashrate5m);
         const w2_1hr = parseHashrate(worker2.hashrate1hr);
         const w2_1d = parseHashrate(worker2.hashrate1d);
