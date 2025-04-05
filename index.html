@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Richard's BTC Miner Dashboard</title>
+  <title>BTC Miner Stats Dashboard</title>
   <!-- Load Chart.js (v3.9.1) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <!-- Load date-fns adapter bundle -->
@@ -13,7 +13,7 @@
       margin: 0;
       padding: 0;
       min-height: 100%;
-      font-family: Calibri, sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #fff;
       color: #000;
       transition: background-color 0.3s, color 0.3s;
@@ -29,7 +29,6 @@
     .dark-mode table td {
       border-color: #444;
     }
-    /* In dark mode, set canvas background to match page */
     .dark-mode canvas {
       background-color: #121212 !important;
     }
@@ -49,12 +48,8 @@
     #darkModeToggle:hover, #requestCORSToggle:hover {
       background: #0056b3;
     }
-    #darkModeToggle {
-      right: 10px;
-    }
-    #requestCORSToggle {
-      right: 200px;
-    }
+    #darkModeToggle { right: 10px; }
+    #requestCORSToggle { right: 200px; }
     /* Layout styles */
     .main-container {
       display: flex;
@@ -100,7 +95,6 @@
     }
     .worker-details-section {
       text-align: center;
-      margin-bottom: 20px;
     }
     .worker-details-section table {
       margin: 0 auto;
@@ -123,7 +117,7 @@
   </style>
 </head>
 <body>
-  <!-- Toggle Dark Mode and Request CORS Access buttons -->
+  <!-- Buttons for dark mode and requesting temporary CORS access -->
   <button id="darkModeToggle">Toggle Dark Mode</button>
   <button id="requestCORSToggle" onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')">
     Request Temporary CORS Access
@@ -143,6 +137,10 @@
           <tr><td>Best Share:</td><td id="overallBestShare">-</td></tr>
           <tr><td>Best Ever:</td><td id="overallBestEver">-</td></tr>
           <tr><td>Last Share:</td><td id="overallLastShare">-</td></tr>
+          <tr><td>Last Share Time:</td><td id="overallLastShareTime">-</td></tr>
+          <tr><td>Authorised Time:</td><td id="overallAuthTime">-</td></tr>
+          <tr><td>Share Difficulty:</td><td id="overallShareDiff">-</td></tr>
+          <tr><td>Share Quality:</td><td id="overallShareQuality">-</td></tr>
         </table>
       </div>
     </div>
@@ -152,7 +150,7 @@
       <!-- Worker 1 -->
       <div class="worker-container">
         <h2>Worker 1 Stats</h2>
-        <h4 id="worker1Name">Loading...</h4>
+        <h3 id="worker1Name">Loading...</h3>
         <div class="worker-chart-section">
           <canvas id="workerChart1"></canvas>
         </div>
@@ -164,13 +162,16 @@
             <tr><td>Best Share:</td><td id="worker1BestShare">-</td></tr>
             <tr><td>Best Ever:</td><td id="worker1BestEver">-</td></tr>
             <tr><td>Last Share:</td><td id="worker1LastShare">-</td></tr>
+            <tr><td>Last Share Time:</td><td id="worker1LastShareTime">-</td></tr>
+            <tr><td>Share Difficulty:</td><td id="worker1ShareDiff">-</td></tr>
+            <tr><td>Share Quality:</td><td id="worker1ShareQuality">-</td></tr>
           </table>
         </div>
       </div>
       <!-- Worker 2 -->
       <div class="worker-container">
         <h2>Worker 2 Stats</h2>
-        <h4 id="worker2Name">Loading...</h4>
+        <h3 id="worker2Name">Loading...</h3>
         <div class="worker-chart-section">
           <canvas id="workerChart2"></canvas>
         </div>
@@ -182,6 +183,9 @@
             <tr><td>Best Share:</td><td id="worker2BestShare">-</td></tr>
             <tr><td>Best Ever:</td><td id="worker2BestEver">-</td></tr>
             <tr><td>Last Share:</td><td id="worker2LastShare">-</td></tr>
+            <tr><td>Last Share Time:</td><td id="worker2LastShareTime">-</td></tr>
+            <tr><td>Share Difficulty:</td><td id="worker2ShareDiff">-</td></tr>
+            <tr><td>Share Quality:</td><td id="worker2ShareQuality">-</td></tr>
           </table>
         </div>
       </div>
@@ -189,8 +193,32 @@
   </div>
 
   <script>
-    // Wrap initialization in DOMContentLoaded to ensure elements are ready.
+    // Wrap all initialization in DOMContentLoaded.
     document.addEventListener("DOMContentLoaded", function () {
+
+      // Helper to convert Unix timestamps (in seconds) to a human-readable string.
+      function formatTimestamp(ts) {
+        const date = new Date(ts * 1000);
+        return date.toLocaleString();
+      }
+
+      // Fixed network target for demonstration purposes.
+      const NETWORK_TARGET = 1e14; // Adjust this value as needed.
+
+      // Compute share difficulty as: NETWORK_TARGET / bestshare.
+      function computeShareDifficulty(bestshare) {
+        return (NETWORK_TARGET / bestshare).toFixed(2);
+      }
+
+      // Compute share quality as: (bestshare / bestever) * 100%.
+      function computeShareQuality(bestshare, bestever) {
+        return ((bestshare / bestever) * 100).toFixed(2) + "%";
+      }
+
+      // Y-axis tick callback to format values as TH/s.
+      function formatToTHs(value) {
+        return (value / 1e12).toFixed(2) + " TH/s";
+      }
 
       // Function to update chart appearance based on dark mode.
       function updateChartAppearance() {
@@ -239,11 +267,6 @@
         return num;
       }
 
-      // Callback for formatting y-axis values as TH/s.
-      function formatToTHs(value) {
-        return (value / 1e12).toFixed(2) + " TH/s";
-      }
-
       let overallChart, workerChart1, workerChart2;
 
       // Set up the overall chart with gradient backgrounds and enhanced styling.
@@ -254,19 +277,15 @@
         const gradient1 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
         gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
-
         const gradient2 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient2.addColorStop(0, 'rgba(0, 255, 0, 0.5)');
         gradient2.addColorStop(1, 'rgba(0, 255, 0, 0)');
-
         const gradient3 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient3.addColorStop(0, 'rgba(255, 0, 0, 0.5)');
         gradient3.addColorStop(1, 'rgba(255, 0, 0, 0)');
-
         const gradient4 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient4.addColorStop(0, 'rgba(128, 0, 128, 0.5)');
         gradient4.addColorStop(1, 'rgba(128, 0, 128, 0)');
-
         const gradient5 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient5.addColorStop(0, 'rgba(255, 165, 0, 0.5)');
         gradient5.addColorStop(1, 'rgba(255, 165, 0, 0)');
@@ -276,70 +295,17 @@
           data: {
             labels: [],
             datasets: [
-              { 
-                label: '1m', 
-                data: [], 
-                borderColor: 'blue', 
-                backgroundColor: gradient1,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 4, 
-                pointHoverRadius: 6,
-                tension: 0.3 
-              },
-              { 
-                label: '5m', 
-                data: [], 
-                borderColor: 'green', 
-                backgroundColor: gradient2,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 4, 
-                pointHoverRadius: 6,
-                tension: 0.3 
-              },
-              { 
-                label: '1hr', 
-                data: [], 
-                borderColor: 'red', 
-                backgroundColor: gradient3,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 4, 
-                pointHoverRadius: 6,
-                tension: 0.3 
-              },
-              { 
-                label: '1d', 
-                data: [], 
-                borderColor: 'purple', 
-                backgroundColor: gradient4,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 4, 
-                pointHoverRadius: 6,
-                tension: 0.3 
-              },
-              { 
-                label: '7d', 
-                data: [], 
-                borderColor: 'orange', 
-                backgroundColor: gradient5,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 4, 
-                pointHoverRadius: 6,
-                tension: 0.3 
-              }
+              { label: '1m', data: [], borderColor: 'blue', backgroundColor: gradient1, fill: true, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, tension: 0.3 },
+              { label: '5m', data: [], borderColor: 'green', backgroundColor: gradient2, fill: true, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, tension: 0.3 },
+              { label: '1hr', data: [], borderColor: 'red', backgroundColor: gradient3, fill: true, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, tension: 0.3 },
+              { label: '1d', data: [], borderColor: 'purple', backgroundColor: gradient4, fill: true, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, tension: 0.3 },
+              { label: '7d', data: [], borderColor: 'orange', backgroundColor: gradient5, fill: true, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, tension: 0.3 }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: true,
-            animation: {
-              duration: 800,
-              easing: 'easeInOutQuad'
-            },
+            animation: { duration: 800, easing: 'easeInOutQuad' },
             scales: {
               x: {
                 type: 'time',
@@ -351,23 +317,16 @@
               y: {
                 beginAtZero: true,
                 title: { display: true, text: 'Hashrate (TH/s)' },
-                ticks: { 
-                  color: '#666',
-                  callback: formatToTHs
-                },
+                ticks: { color: '#666', callback: formatToTHs },
                 grid: { color: 'rgba(0,0,0,0.1)' }
               }
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-                  }
-                }
-              }
+              tooltip: { callbacks: { label: function(context) {
+                const value = context.parsed.y;
+                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+              } } }
             }
           }
         });
@@ -377,7 +336,6 @@
       function setupWorkerCharts() {
         // Worker Chart 1
         const ctx1 = document.getElementById('workerChart1').getContext('2d');
-        // Create gradients for worker 1 using its canvas context.
         const w1Gradient1 = ctx1.createLinearGradient(0, 0, 0, ctx1.canvas.height);
         w1Gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
         w1Gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
@@ -399,61 +357,11 @@
           data: {
             labels: [],
             datasets: [
-              { 
-                label: '1m', 
-                data: [], 
-                borderColor: 'blue', 
-                backgroundColor: w1Gradient1,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '5m', 
-                data: [], 
-                borderColor: 'green', 
-                backgroundColor: w1Gradient2,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '1hr', 
-                data: [], 
-                borderColor: 'red', 
-                backgroundColor: w1Gradient3,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '1d', 
-                data: [], 
-                borderColor: 'purple', 
-                backgroundColor: w1Gradient4,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '7d', 
-                data: [], 
-                borderColor: 'orange', 
-                backgroundColor: w1Gradient5,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              }
+              { label: '1m', data: [], borderColor: 'blue', backgroundColor: w1Gradient1, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '5m', data: [], borderColor: 'green', backgroundColor: w1Gradient2, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '1hr', data: [], borderColor: 'red', backgroundColor: w1Gradient3, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '1d', data: [], borderColor: 'purple', backgroundColor: w1Gradient4, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '7d', data: [], borderColor: 'orange', backgroundColor: w1Gradient5, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 }
             ]
           },
           options: {
@@ -470,30 +378,22 @@
               y: {
                 beginAtZero: true,
                 title: { display: true, text: 'Hashrate (TH/s)' },
-                ticks: { 
-                  color: '#666',
-                  callback: formatToTHs
-                },
+                ticks: { color: '#666', callback: formatToTHs },
                 grid: { color: 'rgba(0,0,0,0.1)' }
               }
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-                  }
-                }
-              }
+              tooltip: { callbacks: { label: function(context) {
+                const value = context.parsed.y;
+                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+              } } }
             }
           }
         });
 
         // Worker Chart 2
         const ctx2 = document.getElementById('workerChart2').getContext('2d');
-        // Create gradients for worker 2.
         const w2Gradient1 = ctx2.createLinearGradient(0, 0, 0, ctx2.canvas.height);
         w2Gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
         w2Gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
@@ -515,61 +415,11 @@
           data: {
             labels: [],
             datasets: [
-              { 
-                label: '1m', 
-                data: [], 
-                borderColor: 'blue', 
-                backgroundColor: w2Gradient1,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '5m', 
-                data: [], 
-                borderColor: 'green', 
-                backgroundColor: w2Gradient2,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '1hr', 
-                data: [], 
-                borderColor: 'red', 
-                backgroundColor: w2Gradient3,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '1d', 
-                data: [], 
-                borderColor: 'purple', 
-                backgroundColor: w2Gradient4,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              },
-              { 
-                label: '7d', 
-                data: [], 
-                borderColor: 'orange', 
-                backgroundColor: w2Gradient5,
-                fill: true, 
-                borderWidth: 3, 
-                pointRadius: 3, 
-                pointHoverRadius: 5,
-                tension: 0.3 
-              }
+              { label: '1m', data: [], borderColor: 'blue', backgroundColor: w2Gradient1, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '5m', data: [], borderColor: 'green', backgroundColor: w2Gradient2, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '1hr', data: [], borderColor: 'red', backgroundColor: w2Gradient3, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '1d', data: [], borderColor: 'purple', backgroundColor: w2Gradient4, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 },
+              { label: '7d', data: [], borderColor: 'orange', backgroundColor: w2Gradient5, fill: true, borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, tension: 0.3 }
             ]
           },
           options: {
@@ -586,29 +436,22 @@
               y: {
                 beginAtZero: true,
                 title: { display: true, text: 'Hashrate (TH/s)' },
-                ticks: { 
-                  color: '#666',
-                  callback: formatToTHs
-                },
+                ticks: { color: '#666', callback: formatToTHs },
                 grid: { color: 'rgba(0,0,0,0.1)' }
               }
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-                  }
-                }
-              }
+              tooltip: { callbacks: { label: function(context) {
+                const value = context.parsed.y;
+                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+              } } }
             }
           }
         });
       }
 
-      // Fetch stats and update charts and details.
+      // Fetch stats from CKpool and update charts and details.
       async function fetchStats() {
         try {
           const response = await fetch(fetchUrl);
@@ -641,6 +484,14 @@
           document.getElementById('overallBestShare').textContent = data.bestshare;
           document.getElementById('overallBestEver').textContent = data.bestever;
           document.getElementById('overallLastShare').textContent = data.lastshare;
+          document.getElementById('overallLastShareTime').textContent = formatTimestamp(data.lastshare);
+          if(data.authorised) {
+            document.getElementById('overallAuthTime').textContent = formatTimestamp(data.authorised);
+          } else {
+            document.getElementById('overallAuthTime').textContent = "N/A";
+          }
+          document.getElementById('overallShareDiff').textContent = computeShareDifficulty(data.bestshare);
+          document.getElementById('overallShareQuality').textContent = computeShareQuality(data.bestshare, data.bestever);
 
           // Update Worker 1.
           const worker1 = data.worker[0];
@@ -668,6 +519,9 @@
           document.getElementById('worker1BestEver').textContent = worker1.bestever;
           document.getElementById('worker1LastShare').textContent = worker1.lastshare;
           document.getElementById('worker1_1m').textContent = worker1.hashrate1m;
+          document.getElementById('worker1LastShareTime').textContent = formatTimestamp(worker1.lastshare);
+          document.getElementById('worker1ShareDiff').textContent = computeShareDifficulty(worker1.bestshare);
+          document.getElementById('worker1ShareQuality').textContent = computeShareQuality(worker1.bestshare, worker1.bestever);
 
           // Update Worker 2.
           const worker2 = data.worker[1];
@@ -695,6 +549,9 @@
           document.getElementById('worker2BestEver').textContent = worker2.bestever;
           document.getElementById('worker2LastShare').textContent = worker2.lastshare;
           document.getElementById('worker2_1m').textContent = worker2.hashrate1m;
+          document.getElementById('worker2LastShareTime').textContent = formatTimestamp(worker2.lastshare);
+          document.getElementById('worker2ShareDiff').textContent = computeShareDifficulty(worker2.bestshare);
+          document.getElementById('worker2ShareQuality').textContent = computeShareQuality(worker2.bestshare, worker2.bestever);
 
         } catch (error) {
           console.error('Error fetching stats:', error);
