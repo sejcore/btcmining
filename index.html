@@ -36,9 +36,9 @@
   <script>
     // The target URL from ckpool
     const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-    // Use a free CORS proxy (for demo purposes). For production, consider your own proxy.
-    const proxyUrl = 'https://api.allorigins.hexocode.repl.co/get?disableCache=true&url=';
-    const fetchUrl = proxyUrl + encodeURIComponent(targetUrl);
+    // Use an alternative free CORS proxy (for demo purposes)
+    const proxyUrl = 'https://thingproxy.freeboard.io/fetch/';
+    const fetchUrl = proxyUrl + targetUrl;
 
     // Function to fetch and parse stats from the target page
     async function fetchStats() {
@@ -47,8 +47,8 @@
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const data = await response.json();
-        const html = data.contents;
+        // thingproxy returns plain HTML, so we use response.text()
+        const html = await response.text();
 
         // Parse the returned HTML string
         const parser = new DOMParser();
