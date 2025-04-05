@@ -1,1 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BTC Miner Stats Dashboard</title>
+  <!-- Load Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #statsData {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #chartContainer {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>BTC Miner Stats Dashboard</h1>
+  <div id="statsData">
+    <p id="miningStat">Loading stats...</p>
+  </div>
+  <div id="chartContainer">
+    <canvas id="statsChart"></canvas>
+  </div>
+
+  <script>
+    // The target URL from ckpool
+    const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
+    // Use a free CORS proxy (for demo purposes). For production, consider your own proxy.
+    const proxyUrl = 'https://api.allorigins.hexocode.repl.co/get?disableCache=true&url=';
+    const fetchUrl = proxyUrl + encodeURIComponent(targetUrl);
+
+    // Function to fetch and parse stats from the target page
+    async function fetchStats() {
+      try {
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        const html = data.contents;
+
+        // Parse the returned HTML string
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // **IMPORTANT**: Update the selector below to match the element containing your desired stat.
+        // For example, if the stat is in an element with class "stat-number", adjust accordingly.
+        const statElement = doc.querySelector('.stat-number'); // <-- change this selector!
+        const statText = statElement ? statElement.textContent.trim() : 'N/A';
+
+        // Update the stats display
+        document.getElementById('miningStat').textContent = 'Current Stat: ' + statText;
+
+        // Try to parse the stat as a number for charting purposes
+        const statValue = parseFloat(statText.replace(/[^0-9.]/g, '')) || 0;
+        updateChart(statValue);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        document.getElementById('miningStat').textContent = 'Error loading stats.';
+      }
+    }
+
+    // Chart.js setup
+    let chart;
+    function setupChart() {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [], // Timestamps
+          datasets: [{
+            label: 'Mining Stat',
+            data: [],
+            borderColor: 'blue',
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'minute'
+              },
+              title: {
+                display: true,
+                text: 'Time'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Value'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChart(newValue) {
+      const now = new Date();
+      chart.data.labels.push(now);
+      chart.data.datasets[0].data.push(newValue);
+      
+      // Keep only the latest 20 data points
+      if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+      }
+      chart.update();
+    }
+
+    // Initialize the chart and start fetching stats
+    setupChart();
+    fetchStats();
+    // Refresh every 60 seconds (60000 ms)
+    setInterval(fetchStats, 60000);
+  </script>
+</body>
+</html>
 
