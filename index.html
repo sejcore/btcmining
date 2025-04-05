@@ -26,7 +26,8 @@
       background-color: #121212;
       color: #e0e0e0;
     }
-    .dark-mode table td {
+    .dark-mode .table-container td {
+      background-color: #1e1e1e;
       border-color: #444;
     }
     .dark-mode canvas {
@@ -48,8 +49,12 @@
     #darkModeToggle:hover, #requestCORSToggle:hover {
       background: #0056b3;
     }
-    #darkModeToggle { right: 10px; }
-    #requestCORSToggle { right: 200px; }
+    #darkModeToggle {
+      right: 10px;
+    }
+    #requestCORSToggle {
+      right: 200px;
+    }
     /* Layout styles */
     .main-container {
       display: flex;
@@ -67,16 +72,9 @@
     }
     .overall-details-container {
       text-align: center;
+      margin-top: 10px;
     }
-    .overall-details-container table {
-      margin: 0 auto;
-      border-collapse: collapse;
-    }
-    .overall-details-container td {
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-    }
-    /* Bottom section for worker stats */
+    /* Worker section styling */
     .bottom-section {
       display: flex;
       flex-wrap: wrap;
@@ -95,14 +93,21 @@
     }
     .worker-details-section {
       text-align: center;
+      margin-bottom: 20px;
     }
-    .worker-details-section table {
+    /* Enhanced Table Styling */
+    .table-container {
+      width: 90%;
       margin: 0 auto;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 10px;
     }
-    .worker-details-section td {
+    .table-container td {
+      background-color: #f0f0f0;
+      padding: 10px;
       border: 1px solid #ccc;
-      padding: 4px 8px;
+      border-radius: 5px;
+      text-align: left;
     }
     /* Let Chart.js handle responsive sizing */
     canvas {
@@ -117,7 +122,7 @@
   </style>
 </head>
 <body>
-  <!-- Buttons for dark mode and requesting temporary CORS access -->
+  <!-- Toggle Dark Mode and Request Temporary CORS Access buttons -->
   <button id="darkModeToggle">Toggle Dark Mode</button>
   <button id="requestCORSToggle" onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')">
     Request Temporary CORS Access
@@ -130,7 +135,7 @@
       <div class="overall-chart-container">
         <canvas id="statsChart"></canvas>
       </div>
-      <div class="overall-details-container">
+      <div class="overall-details-container table-container">
         <h3>Overall Details</h3>
         <table>
           <tr><td>Shares:</td><td id="overallShares">-</td></tr>
@@ -150,11 +155,11 @@
       <!-- Worker 1 -->
       <div class="worker-container">
         <h2>Worker 1 Stats</h2>
-        <h4 id="worker1Name">Loading...</h4>
+        <h3 id="worker1Name">Loading...</h3>
         <div class="worker-chart-section">
           <canvas id="workerChart1"></canvas>
         </div>
-        <div class="worker-details-section">
+        <div class="worker-details-section table-container">
           <h3>Worker 1 Details</h3>
           <table>
             <tr><td>1m:</td><td id="worker1_1m">-</td></tr>
@@ -171,11 +176,11 @@
       <!-- Worker 2 -->
       <div class="worker-container">
         <h2>Worker 2 Stats</h2>
-        <h4 id="worker2Name">Loading...</h4>
+        <h3 id="worker2Name">Loading...</h3>
         <div class="worker-chart-section">
           <canvas id="workerChart2"></canvas>
         </div>
-        <div class="worker-details-section">
+        <div class="worker-details-section table-container">
           <h3>Worker 2 Details</h3>
           <table>
             <tr><td>1m:</td><td id="worker2_1m">-</td></tr>
@@ -193,24 +198,24 @@
   </div>
 
   <script>
-    // Wrap all initialization in DOMContentLoaded.
+    // Wrap initialization in DOMContentLoaded.
     document.addEventListener("DOMContentLoaded", function () {
 
-      // Helper to convert Unix timestamps (in seconds) to a human-readable string.
+      // Helper to convert Unix timestamps (in seconds) to human-readable string.
       function formatTimestamp(ts) {
         const date = new Date(ts * 1000);
         return date.toLocaleString();
       }
 
-      // Fixed network target for demonstration purposes.
-      const NETWORK_TARGET = 1e14; // Adjust this value as needed.
+      // Fixed network target for demonstration.
+      const NETWORK_TARGET = 1e14; // Adjust as needed.
 
-      // Compute share difficulty as: NETWORK_TARGET / bestshare.
+      // Compute share difficulty: NETWORK_TARGET / bestshare.
       function computeShareDifficulty(bestshare) {
         return (NETWORK_TARGET / bestshare).toFixed(2);
       }
 
-      // Compute share quality as: (bestshare / bestever) * 100%.
+      // Compute share quality: (bestshare / bestever) * 100%.
       function computeShareQuality(bestshare, bestever) {
         return ((bestshare / bestever) * 100).toFixed(2) + "%";
       }
@@ -251,9 +256,9 @@
         updateChartAppearance();
       });
 
-      // CKpool endpoint (returns JSON)
+      // CKpool endpoint.
       const targetUrl = 'https://solo.ckpool.org/users/bc1qj77y5emr5xv6jrqn940wn0uk58afya82je7uu5';
-      // Use CORS Anywhere proxy (requires temporary access)
+      // Use CORS Anywhere proxy.
       const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
       const fetchUrl = proxyUrl + targetUrl;
 
@@ -269,11 +274,11 @@
 
       let overallChart, workerChart1, workerChart2;
 
-      // Set up the overall chart with gradient backgrounds and enhanced styling.
+      // Set up the overall chart with gradient styling.
       function setupOverallChart() {
         const ctx = document.getElementById('statsChart').getContext('2d');
 
-        // Create gradients for each dataset.
+        // Create gradients.
         const gradient1 = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         gradient1.addColorStop(0, 'rgba(0, 0, 255, 0.5)');
         gradient1.addColorStop(1, 'rgba(0, 0, 255, 0)');
@@ -323,16 +328,20 @@
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: { callbacks: { label: function(context) {
-                const value = context.parsed.y;
-                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-              } } }
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
       }
 
-      // Set up the worker charts with similar enhanced styling.
+      // Set up the worker charts with similar styling.
       function setupWorkerCharts() {
         // Worker Chart 1
         const ctx1 = document.getElementById('workerChart1').getContext('2d');
@@ -384,10 +393,14 @@
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: { callbacks: { label: function(context) {
-                const value = context.parsed.y;
-                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-              } } }
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
@@ -442,16 +455,20 @@
             },
             plugins: {
               legend: { labels: { color: '#666', font: { size: 14 } } },
-              tooltip: { callbacks: { label: function(context) {
-                const value = context.parsed.y;
-                return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
-              } } }
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return context.dataset.label + ': ' + (value / 1e12).toFixed(2) + ' TH/s';
+                  }
+                }
+              }
             }
           }
         });
       }
 
-      // Fetch stats from CKpool and update charts and details.
+      // Fetch stats from CKpool and update charts and tables.
       async function fetchStats() {
         try {
           const response = await fetch(fetchUrl);
@@ -485,11 +502,7 @@
           document.getElementById('overallBestEver').textContent = data.bestever;
           document.getElementById('overallLastShare').textContent = data.lastshare;
           document.getElementById('overallLastShareTime').textContent = formatTimestamp(data.lastshare);
-          if(data.authorised) {
-            document.getElementById('overallAuthTime').textContent = formatTimestamp(data.authorised);
-          } else {
-            document.getElementById('overallAuthTime').textContent = "N/A";
-          }
+          document.getElementById('overallAuthTime').textContent = data.authorised ? formatTimestamp(data.authorised) : "N/A";
           document.getElementById('overallShareDiff').textContent = computeShareDifficulty(data.bestshare);
           document.getElementById('overallShareQuality').textContent = computeShareQuality(data.bestshare, data.bestever);
 
@@ -558,7 +571,7 @@
         }
       }
 
-      // Initialize charts and start fetching data.
+      // Initialize charts and start data fetching.
       setupOverallChart();
       setupWorkerCharts();
       fetchStats();
